@@ -49,17 +49,35 @@ async function getKVStore(): Promise<DataStore | null> {
     
     // Используем стандартный Redis через ioredis
     if (USE_REDIS_URL) {
-      const Redis = (await import('ioredis')).default;
-      const redis = new Redis(process.env.REDIS_URL!);
-      
       try {
-        const data = await redis.get('orchid-data');
-        if (data) {
-          return JSON.parse(data);
+        const Redis = (await import('ioredis')).default;
+        const redis = new Redis(process.env.REDIS_URL!, {
+          maxRetriesPerRequest: 3,
+          enableReadyCheck: false,
+          lazyConnect: true,
+        });
+        
+        await redis.connect();
+        
+        try {
+          const data = await redis.get('orchid-data');
+          console.log('Redis GET result:', data ? 'data found' : 'no data');
+          if (data) {
+            const parsed = JSON.parse(data);
+            console.log('Parsed Redis data:', {
+              portfolio: parsed.portfolio?.length || 0,
+              tournaments: parsed.tournaments?.length || 0
+            });
+            return parsed;
+          }
+          console.log('Redis returned empty, returning default store');
+          return { portfolio: [], tournaments: [] };
+        } finally {
+          await redis.quit();
         }
-        return { portfolio: [], tournaments: [] };
-      } finally {
-        redis.quit();
+      } catch (error) {
+        console.error('Error reading from Redis:', error);
+        return null;
       }
     }
     
@@ -193,18 +211,30 @@ async function getStore(): Promise<DataStore> {
   // Сначала пробуем KV/Redis (для Vercel)
   if (USE_REDIS) {
     const kvData = await getKVStore();
-    if (kvData) return kvData;
+    if (kvData !== null) {
+      console.log('Using Redis/KV store, data count:', {
+        portfolio: kvData.portfolio.length,
+        tournaments: kvData.tournaments.length
+      });
+      return kvData;
+    }
+    console.warn('Redis/KV store returned null, but USE_REDIS is true');
   }
   
-  // Fallback на файловую систему (для локальной разработки)
+  // Fallback на файловую систему (только для локальной разработки)
   // На Vercel это не сработает, но для локальной разработки нужно
-  try {
-    return await ensureDataFile();
-  } catch (error) {
-    // На Vercel файловая система read-only, возвращаем пустые данные
-    console.warn('File system not available, using empty store');
-    return { portfolio: [], tournaments: [] };
+  if (!process.env.VERCEL) {
+    try {
+      return await ensureDataFile();
+    } catch (error) {
+      console.error('Error reading from file system:', error);
+      return { portfolio: [], tournaments: [] };
+    }
   }
+  
+  // На Vercel без Redis возвращаем пустые данные
+  console.warn('No Redis/KV configured and on Vercel, returning empty store');
+  return { portfolio: [], tournaments: [] };
 }
 
 async function saveStore(data: DataStore): Promise<void> {

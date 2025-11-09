@@ -1,6 +1,10 @@
 // app/portfolio/page.tsx
 import { fetchPortfolio, type Video } from '@/lib/api';
 
+// Отключаем кэширование для динамических данных
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 async function getPortfolio() {
   return await fetchPortfolio(0, 25);
 }

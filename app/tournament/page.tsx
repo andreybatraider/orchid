@@ -1,8 +1,11 @@
-
 import DarkVeil from "@/components/DarkVeil";
 import { title } from "@/components/primitives";
 import { Button } from "@heroui/button";
 import { fetchTournaments, type Tournament } from '@/lib/api';
+
+// Отключаем кэширование для динамических данных
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 async function getTournaments() {
   return await fetchTournaments(0, 25);
