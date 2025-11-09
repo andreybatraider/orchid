@@ -23,6 +23,7 @@
     "@react-aria/ssr": "3.9.9",
     "@react-aria/visually-hidden": "3.8.25",
     "@vercel/kv": "^0.2.4",
+    "ioredis": "^5.3.2",
     "clsx": "2.1.1",
     "framer-motion": "11.18.2",
     "intl-messageformat": "10.7.16",

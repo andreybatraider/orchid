@@ -32,9 +32,10 @@ const DATA_FILE = path.join(process.cwd(), 'data', 'store.json');
 // Проверяем наличие переменных окружения для KV/Redis
 const USE_KV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
 const USE_UPSTASH = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
-const USE_REDIS = USE_KV || USE_UPSTASH;
+const USE_REDIS_URL = process.env.REDIS_URL;
+const USE_REDIS = USE_KV || USE_UPSTASH || USE_REDIS_URL;
 
-// Работа с Vercel KV или Upstash Redis (для продакшена)
+// Работа с Vercel KV, Upstash Redis или стандартным Redis (для продакшена)
 async function getKVStore(): Promise<DataStore | null> {
   if (!USE_REDIS) return null;
   
@@ -44,6 +45,22 @@ async function getKVStore(): Promise<DataStore | null> {
       const { kv } = await import('@vercel/kv');
       const data = await kv.get<DataStore>('orchid-data');
       return data || { portfolio: [], tournaments: [] };
+    }
+    
+    // Используем стандартный Redis через ioredis
+    if (USE_REDIS_URL) {
+      const Redis = (await import('ioredis')).default;
+      const redis = new Redis(process.env.REDIS_URL!);
+      
+      try {
+        const data = await redis.get('orchid-data');
+        if (data) {
+          return JSON.parse(data);
+        }
+        return { portfolio: [], tournaments: [] };
+      } finally {
+        redis.quit();
+      }
     }
     
     // Используем Upstash REST API
@@ -96,6 +113,19 @@ async function saveKVStore(data: DataStore): Promise<boolean> {
       const { kv } = await import('@vercel/kv');
       await kv.set('orchid-data', data);
       return true;
+    }
+    
+    // Используем стандартный Redis через ioredis
+    if (USE_REDIS_URL) {
+      const Redis = (await import('ioredis')).default;
+      const redis = new Redis(process.env.REDIS_URL!);
+      
+      try {
+        await redis.set('orchid-data', JSON.stringify(data));
+        return true;
+      } finally {
+        redis.quit();
+      }
     }
     
     // Используем Upstash REST API
