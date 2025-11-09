@@ -2,6 +2,7 @@ import DarkVeil from "@/components/DarkVeil";
 import { title } from "@/components/primitives";
 import { Button } from "@heroui/button";
 import { fetchTournaments, type Tournament } from '@/lib/api';
+import { getDisciplines, type Discipline } from '@/lib/data';
 
 // Отключаем кэширование для динамических данных
 export const dynamic = 'force-dynamic';
@@ -9,6 +10,10 @@ export const revalidate = 0;
 
 async function getTournaments() {
   return await fetchTournaments(0, 25);
+}
+
+async function getDisciplinesData() {
+  return await getDisciplines();
 }
 
 const formatPrice = (price: number | null): string => {
@@ -35,8 +40,27 @@ const formatTeamsCount = (count: number | null): string => {
   return count.toString();
 };
 
+// Функция для получения пути к иконке дисциплины
+const getDisciplineIcon = (disciplineName: string): string | null => {
+  const name = disciplineName.toLowerCase().trim();
+  if (name.includes('dota') || name === 'dota2' || name === 'dota 2') {
+    return '/Dota2.png';
+  }
+  if (name.includes('cs2') || name.includes('counter-strike 2') || name.includes('counter strike 2') || name === 'cs 2') {
+    return '/CS2.png';
+  }
+  return null;
+};
+
 export default async function TournamentsPage() {
   const { list: tournaments } = await getTournaments();
+  const disciplines = await getDisciplinesData();
+
+  // Создаем маппинг названия дисциплины -> ссылка регистрации
+  const disciplineMap = new Map<string, string>();
+  disciplines.forEach(discipline => {
+    disciplineMap.set(discipline.Name, discipline.RegistrationLink);
+  });
 
   return (
     <div className="container mx-auto px-4 py-8 mt-24" >
@@ -59,6 +83,10 @@ export default async function TournamentsPage() {
               Comands: tournament.Comands
             };
 
+            // Получаем ссылку регистрации для этой дисциплины
+            const registrationLink = disciplineMap.get(safeTournament.Game) || 'https://t.me/ORCHIDORG';
+            const disciplineIcon = getDisciplineIcon(safeTournament.Game);
+
             return (
               <div 
                 key={safeTournament.Id} 
@@ -74,7 +102,16 @@ export default async function TournamentsPage() {
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div>
                     <p className="text-gray-400 text-sm">Дисциплина</p>
-                    <p className="font-medium">{safeTournament.Game}</p>
+                    <div className="flex items-center gap-2">
+                      {disciplineIcon && (
+                        <img 
+                          src={disciplineIcon} 
+                          alt={safeTournament.Game}
+                          className="w-6 h-6 object-contain"
+                        />
+                      )}
+                      <p className="font-medium">{safeTournament.Game}</p>
+                    </div>
                   </div>
                   <div>
                     <p className="text-gray-400 text-sm">Дата</p>
@@ -92,7 +129,7 @@ export default async function TournamentsPage() {
 
                 <Button 
                   as="a" 
-                  href="https://t.me/ORCHIDORG" 
+                  href={registrationLink}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full mt-2 rounded bg-[#FF2F71]/75 "
