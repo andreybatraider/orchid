@@ -5,58 +5,86 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@heroui/button';
 import { Input } from '@heroui/input';
 
-interface Video {
+interface Tournament {
   Id: number;
   Name: string;
-  description: string;
-  linkyt: string;
-  bglink: string;
+  Price: number | null;
+  Date: string;
+  Game: string;
+  Comands: number | null;
+}
+
+interface Discipline {
+  Id: number;
+  Name: string;
+  RegistrationLink: string;
 }
 
 export default function AdminPortfolio() {
   const router = useRouter();
-  const [videos, setVideos] = useState<Video[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [editingVideo, setEditingVideo] = useState<Video | null>(null);
+  const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [formData, setFormData] = useState({
     Name: '',
-    description: '',
-    linkyt: '',
-    bglink: '',
+    Price: '',
+    Date: '',
+    Game: '',
+    Comands: '',
   });
 
   useEffect(() => {
     // Проверка auth теперь в layout
-    fetchVideos();
+    fetchTournaments();
+    fetchDisciplines();
   }, []);
 
-  const fetchVideos = async () => {
+  const fetchTournaments = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/portfolio');
+      const response = await fetch('/api/admin/tournaments');
       if (response.ok) {
         const data = await response.json();
-        setVideos(data.list || []);
+        setTournaments(data.list || []);
       }
     } catch (error) {
-      console.error('Failed to fetch videos:', error);
+      console.error('Failed to fetch tournaments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDisciplines = async () => {
+    try {
+      const response = await fetch('/api/admin/disciplines');
+      if (response.ok) {
+        const data = await response.json();
+        setDisciplines(data.list || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch disciplines:', error);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const url = '/api/admin/portfolio';
-      const method = editingVideo ? 'PUT' : 'POST';
-      const body = editingVideo
-        ? { ...formData, Id: editingVideo.Id }
-        : formData;
+      const body: Partial<Tournament> & { Id?: number } = {
+        Name: formData.Name,
+        Price: formData.Price ? parseFloat(formData.Price) : null,
+        Date: formData.Date,
+        Game: formData.Game,
+        Comands: formData.Comands ? parseInt(formData.Comands) : null,
+      };
 
-      const response = await fetch(url, {
-        method,
+      if (editingTournament) {
+        body.Id = editingTournament.Id;
+      }
+
+      const response = await fetch('/api/admin/tournaments', {
+        method: editingTournament ? 'PUT' : 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -65,55 +93,57 @@ export default function AdminPortfolio() {
 
       if (response.ok) {
         setShowForm(false);
-        setEditingVideo(null);
-        setFormData({ Name: '', description: '', linkyt: '', bglink: '' });
-        fetchVideos();
+        setEditingTournament(null);
+        setFormData({ Name: '', Price: '', Date: '', Game: '', Comands: '' });
+        fetchTournaments();
       } else {
         const errorData = await response.json();
         alert('Ошибка при сохранении: ' + (errorData.error || 'Неизвестная ошибка'));
       }
     } catch (error) {
-      console.error('Failed to save video:', error);
+      console.error('Failed to save tournament:', error);
       alert('Ошибка при сохранении');
     }
   };
 
-  const handleEdit = (video: Video) => {
-    setEditingVideo(video);
+  const handleEdit = (tournament: Tournament) => {
+    setEditingTournament(tournament);
     setFormData({
-      Name: video.Name || '',
-      description: video.description || '',
-      linkyt: video.linkyt || '',
-      bglink: video.bglink || '',
+      Name: tournament.Name || '',
+      Price: tournament.Price?.toString() || '',
+      Date: tournament.Date || '',
+      Game: tournament.Game || '',
+      Comands: tournament.Comands?.toString() || '',
     });
     setShowForm(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Вы уверены, что хотите удалить это видео?')) {
+    if (!confirm('Вы уверены, что хотите удалить этот турнир?')) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/admin/portfolio?id=${id}`, {
+      const response = await fetch(`/api/admin/tournaments?id=${id}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
-        fetchVideos();
+        fetchTournaments();
       } else {
-        alert('Ошибка при удалении');
+        const errorData = await response.json();
+        alert('Ошибка при удалении: ' + (errorData.error || 'Неизвестная ошибка'));
       }
     } catch (error) {
-      console.error('Failed to delete video:', error);
+      console.error('Failed to delete tournament:', error);
       alert('Ошибка при удалении');
     }
   };
 
   const handleCancel = () => {
     setShowForm(false);
-    setEditingVideo(null);
-    setFormData({ Name: '', description: '', linkyt: '', bglink: '' });
+    setEditingTournament(null);
+    setFormData({ Name: '', Price: '', Date: '', Game: '', Comands: '' });
   };
 
   if (loading) {
@@ -127,112 +157,147 @@ export default function AdminPortfolio() {
   return (
     <div className="max-w-7xl">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold text-white">Управление портфолио</h1>
+        <h1 className="text-3xl font-bold text-white">Управление архивом турниров</h1>
         <Button
           color="primary"
           className="bg-[#FF2F71]"
           onClick={() => {
             setShowForm(true);
-            setEditingVideo(null);
-            setFormData({ Name: '', description: '', linkyt: '', bglink: '' });
+            setEditingTournament(null);
+            setFormData({ Name: '', Price: '', Date: '', Game: '', Comands: '' });
+            fetchDisciplines(); // Обновляем список дисциплин перед показом формы
           }}
         >
-          Добавить видео
+          Добавить турнир
         </Button>
       </div>
 
-        {showForm && (
-          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-lg mb-6">
-            <h2 className="text-xl font-bold text-white mb-4">
-              {editingVideo ? 'Редактировать видео' : 'Добавить видео'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <Input
-                label="Название"
-                value={formData.Name}
-                onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
-                variant="bordered"
-                isRequired
-              />
-              <Input
-                label="Описание"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                variant="bordered"
-                isRequired
-              />
-              <Input
-                label="Ссылка на YouTube"
-                value={formData.linkyt}
-                onChange={(e) => setFormData({ ...formData, linkyt: e.target.value })}
-                variant="bordered"
-                isRequired
-              />
-              <Input
-                label="Ссылка на обложку"
-                value={formData.bglink}
-                onChange={(e) => setFormData({ ...formData, bglink: e.target.value })}
-                variant="bordered"
-              />
-              <div className="flex gap-4">
-                <Button type="submit" color="primary" className="bg-[#FF2F71]">
-                  {editingVideo ? 'Сохранить' : 'Добавить'}
-                </Button>
-                <Button type="button" variant="flat" onClick={handleCancel}>
-                  Отмена
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {videos.map((video) => (
-            <div
-              key={video.Id}
-              className="bg-gray-800/50 border border-gray-700 p-6 rounded-lg"
-            >
-              <div className="mb-4">
-                {video.bglink && (
-                  <img
-                    src={video.bglink}
-                    alt={video.Name}
-                    className="w-full h-48 object-cover rounded mb-4"
-                  />
-                )}
-                <h3 className="text-xl font-bold text-white mb-2">{video.Name}</h3>
-                <p className="text-gray-400 text-sm mb-4 line-clamp-3">
-                  {video.description}
+      {showForm && (
+        <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-lg mb-6">
+          <h2 className="text-xl font-bold text-white mb-4">
+            {editingTournament ? 'Редактировать турнир' : 'Добавить турнир'}
+          </h2>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              label="Название"
+              value={formData.Name}
+              onChange={(e) => setFormData({ ...formData, Name: e.target.value })}
+              variant="bordered"
+              isRequired
+            />
+            <div>
+              <label className="text-sm text-gray-300 mb-2 block">Дисциплина *</label>
+              <select
+                value={formData.Game}
+                onChange={(e) => setFormData({ ...formData, Game: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                required
+              >
+                <option value="">Выберите дисциплину</option>
+                {disciplines.map((discipline) => (
+                  <option key={discipline.Id} value={discipline.Name}>
+                    {discipline.Name}
+                  </option>
+                ))}
+              </select>
+              {disciplines.length === 0 && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Нет дисциплин. <a href="/admin/disciplines" className="text-pink-400 hover:underline">Добавить дисциплину</a>
                 </p>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="flat"
-                  color="primary"
-                  onClick={() => handleEdit(video)}
-                >
-                  Редактировать
-                </Button>
-                <Button
-                  size="sm"
-                  variant="flat"
-                  color="danger"
-                  onClick={() => handleDelete(video.Id)}
-                >
-                  Удалить
-                </Button>
-              </div>
+              )}
             </div>
-          ))}
+            <Input
+              label="Дата (YYYY-MM-DD)"
+              type="date"
+              value={formData.Date}
+              onChange={(e) => setFormData({ ...formData, Date: e.target.value })}
+              variant="bordered"
+              isRequired
+            />
+            <Input
+              label="Призовой фонд (руб.)"
+              type="number"
+              value={formData.Price}
+              onChange={(e) => setFormData({ ...formData, Price: e.target.value })}
+              variant="bordered"
+            />
+            <Input
+              label="Количество команд"
+              type="number"
+              value={formData.Comands}
+              onChange={(e) => setFormData({ ...formData, Comands: e.target.value })}
+              variant="bordered"
+            />
+            <div className="flex gap-4">
+              <Button type="submit" color="primary" className="bg-[#FF2F71]">
+                {editingTournament ? 'Сохранить' : 'Добавить'}
+              </Button>
+              <Button type="button" variant="flat" onClick={handleCancel}>
+                Отмена
+              </Button>
+            </div>
+          </form>
         </div>
+      )}
 
-        {videos.length === 0 && !loading && (
-          <div className="bg-gray-800/50 border border-gray-700 p-8 rounded-lg text-center">
-            <p className="text-gray-400">Нет видео в портфолио</p>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {tournaments.map((tournament) => (
+          <div
+            key={tournament.Id}
+            className="bg-gray-800/50 border border-gray-700 p-6 rounded-lg"
+          >
+            <h3 className="text-xl font-bold text-white mb-2">{tournament.Name}</h3>
+            <div className="space-y-2 mb-4">
+              <p className="text-gray-400">
+                <span className="font-semibold">Дисциплина:</span> {tournament.Game}
+              </p>
+              <p className="text-gray-400">
+                <span className="font-semibold">Дата:</span>{' '}
+                {tournament.Date
+                  ? new Date(tournament.Date).toLocaleDateString('ru-RU')
+                  : 'Не указана'}
+              </p>
+              <p className="text-gray-400">
+                <span className="font-semibold">Призовой фонд:</span>{' '}
+                {tournament.Price
+                  ? `${tournament.Price.toLocaleString('ru-RU')} ₽`
+                  : 'Не указан'}
+              </p>
+              <p className="text-gray-400">
+                <span className="font-semibold">Команд:</span>{' '}
+                {tournament.Comands || 0}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="flat"
+                color="primary"
+                onClick={() => {
+                  handleEdit(tournament);
+                  fetchDisciplines(); // Обновляем список дисциплин перед редактированием
+                }}
+              >
+                Редактировать
+              </Button>
+              <Button
+                size="sm"
+                variant="flat"
+                color="danger"
+                onClick={() => handleDelete(tournament.Id)}
+              >
+                Удалить
+              </Button>
+            </div>
           </div>
-        )}
+        ))}
+      </div>
+
+      {tournaments.length === 0 && !loading && (
+        <div className="bg-gray-800/50 border border-gray-700 p-8 rounded-lg text-center">
+          <p className="text-gray-400">Нет турниров в архиве</p>
+        </div>
+      )}
     </div>
   );
 }
-
