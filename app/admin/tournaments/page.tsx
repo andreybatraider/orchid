@@ -70,7 +70,7 @@ export default function AdminTournaments() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const body = {
+      const body: Partial<Tournament> & { Id?: number } = {
         Name: formData.Name,
         Price: formData.Price ? parseFloat(formData.Price) : null,
         Date: formData.Date,

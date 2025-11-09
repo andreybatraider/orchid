@@ -6,9 +6,8 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const offset = parseInt(searchParams.get('offset') || '0');
     const limit = parseInt(searchParams.get('limit') || '25');
-    const viewId = searchParams.get('viewId') || undefined;
 
-    const data = await fetchPortfolio(offset, limit, viewId);
+    const data = await fetchPortfolio(offset, limit);
     return NextResponse.json(data);
   } catch (error) {
     console.error('Failed to fetch portfolio:', error);
