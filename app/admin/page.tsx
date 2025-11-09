@@ -21,7 +21,7 @@ export default function AdminLogin() {
       const response = await fetch('/api/admin/auth');
       const data = await response.json();
       if (data.authenticated) {
-        router.push('/admin/portfolio');
+        router.push('/admin/tournaments');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -47,7 +47,7 @@ export default function AdminLogin() {
       if (data.success) {
         // Небольшая задержка для установки cookie, затем редирект
         await new Promise(resolve => setTimeout(resolve, 100));
-        window.location.href = '/admin/portfolio';
+        window.location.href = '/admin/tournaments';
       } else {
         setError(data.error || 'Неверный пароль');
       }

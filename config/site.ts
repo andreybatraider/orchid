@@ -5,12 +5,12 @@ export const siteConfig = {
   description: "Делаем киберспорт",
   navItems: [
     {
-      label: "Архив турниров",
-      href: "/portfolio",
-    },
-    {
       label: "Турниры",
       href: "/tournament",
+    },
+    {
+      label: "Архив турниров",
+      href: "/portfolio",
     },
     {
       label: "Услуги",
@@ -23,12 +23,12 @@ export const siteConfig = {
   ],
   navMenuItems: [
     {
-      label: "Архив турниров",
-      href: "/portfolio",
-    },
-    {
       label: "Турниры",
       href: "/tournament",
+    },
+    {
+      label: "Архив турниров",
+      href: "/portfolio",
     },
     {
       label: "Услуги",
