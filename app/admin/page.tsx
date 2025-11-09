@@ -21,7 +21,7 @@ export default function AdminLogin() {
       const response = await fetch('/api/admin/auth');
       const data = await response.json();
       if (data.authenticated) {
-        router.push('/admin/dashboard');
+        router.push('/admin/portfolio');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
@@ -45,7 +45,7 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (data.success) {
-        router.push('/admin/dashboard');
+        router.push('/admin/portfolio');
       } else {
         setError(data.error || 'Неверный пароль');
       }

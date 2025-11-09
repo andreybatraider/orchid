@@ -17,7 +17,6 @@ export default function AdminPortfolio() {
   const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
   const [formData, setFormData] = useState({
@@ -28,31 +27,13 @@ export default function AdminPortfolio() {
   });
 
   useEffect(() => {
-    checkAuth();
+    // Проверка auth теперь в layout
+    fetchVideos();
   }, []);
-
-  useEffect(() => {
-    if (authenticated) {
-      fetchVideos();
-    }
-  }, [authenticated]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/admin/auth');
-      const data = await response.json();
-      if (data.authenticated) {
-        setAuthenticated(true);
-      } else {
-        router.push('/admin');
-      }
-    } catch (error) {
-      router.push('/admin');
-    }
-  };
 
   const fetchVideos = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/admin/portfolio');
       if (response.ok) {
         const data = await response.json();

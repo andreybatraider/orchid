@@ -18,7 +18,6 @@ interface SiteSettings {
 
 export default function AdminSettings() {
   const router = useRouter();
-  const [authenticated, setAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<SiteSettings>({
@@ -34,13 +33,12 @@ export default function AdminSettings() {
 
   useEffect(() => {
     // Проверка auth теперь в layout
-    setAuthenticated(true);
-    setLoading(false);
     fetchSettings();
   }, []);
 
   const fetchSettings = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/admin/settings');
       if (response.ok) {
         const data = await response.json();
@@ -48,6 +46,8 @@ export default function AdminSettings() {
       }
     } catch (error) {
       console.error('Failed to fetch settings:', error);
+    } finally {
+      setLoading(false);
     }
   };
 

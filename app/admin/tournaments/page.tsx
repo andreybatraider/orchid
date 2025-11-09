@@ -18,7 +18,6 @@ export default function AdminTournaments() {
   const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
   const [formData, setFormData] = useState({
@@ -30,31 +29,13 @@ export default function AdminTournaments() {
   });
 
   useEffect(() => {
-    checkAuth();
+    // Проверка auth теперь в layout
+    fetchTournaments();
   }, []);
-
-  useEffect(() => {
-    if (authenticated) {
-      fetchTournaments();
-    }
-  }, [authenticated]);
-
-  const checkAuth = async () => {
-    try {
-      const response = await fetch('/api/admin/auth');
-      const data = await response.json();
-      if (data.authenticated) {
-        setAuthenticated(true);
-      } else {
-        router.push('/admin');
-      }
-    } catch (error) {
-      router.push('/admin');
-    }
-  };
 
   const fetchTournaments = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/admin/tournaments');
       if (response.ok) {
         const data = await response.json();
