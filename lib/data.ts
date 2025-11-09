@@ -11,6 +11,7 @@ export interface Video {
   description: string;
   linkyt: string;
   bglink: string;
+  Game?: string; // Дисциплина (опционально для обратной совместимости)
 }
 
 export interface Tournament {

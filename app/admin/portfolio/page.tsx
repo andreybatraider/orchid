@@ -11,11 +11,19 @@ interface Video {
   description: string;
   linkyt: string;
   bglink: string;
+  Game?: string;
+}
+
+interface Discipline {
+  Id: number;
+  Name: string;
+  RegistrationLink: string;
 }
 
 export default function AdminPortfolio() {
   const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingVideo, setEditingVideo] = useState<Video | null>(null);
@@ -24,11 +32,13 @@ export default function AdminPortfolio() {
     description: '',
     linkyt: '',
     bglink: '',
+    Game: '',
   });
 
   useEffect(() => {
     // Проверка auth теперь в layout
     fetchVideos();
+    fetchDisciplines();
   }, []);
 
   const fetchVideos = async () => {
@@ -43,6 +53,18 @@ export default function AdminPortfolio() {
       console.error('Failed to fetch videos:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDisciplines = async () => {
+    try {
+      const response = await fetch('/api/admin/disciplines');
+      if (response.ok) {
+        const data = await response.json();
+        setDisciplines(data.list || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch disciplines:', error);
     }
   };
 
@@ -66,7 +88,7 @@ export default function AdminPortfolio() {
       if (response.ok) {
         setShowForm(false);
         setEditingVideo(null);
-        setFormData({ Name: '', description: '', linkyt: '', bglink: '' });
+        setFormData({ Name: '', description: '', linkyt: '', bglink: '', Game: '' });
         fetchVideos();
       } else {
         const errorData = await response.json();
@@ -85,8 +107,10 @@ export default function AdminPortfolio() {
       description: video.description || '',
       linkyt: video.linkyt || '',
       bglink: video.bglink || '',
+      Game: video.Game || '',
     });
     setShowForm(true);
+    fetchDisciplines(); // Обновляем список дисциплин перед редактированием
   };
 
   const handleDelete = async (id: number) => {
@@ -113,7 +137,7 @@ export default function AdminPortfolio() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingVideo(null);
-    setFormData({ Name: '', description: '', linkyt: '', bglink: '' });
+    setFormData({ Name: '', description: '', linkyt: '', bglink: '', Game: '' });
   };
 
   if (loading) {
@@ -134,7 +158,8 @@ export default function AdminPortfolio() {
           onClick={() => {
             setShowForm(true);
             setEditingVideo(null);
-            setFormData({ Name: '', description: '', linkyt: '', bglink: '' });
+            setFormData({ Name: '', description: '', linkyt: '', bglink: '', Game: '' });
+            fetchDisciplines(); // Обновляем список дисциплин перед показом формы
           }}
         >
           Добавить видео
@@ -161,6 +186,26 @@ export default function AdminPortfolio() {
               variant="bordered"
               isRequired
             />
+            <div>
+              <label className="text-sm text-gray-300 mb-2 block">Дисциплина</label>
+              <select
+                value={formData.Game}
+                onChange={(e) => setFormData({ ...formData, Game: e.target.value })}
+                className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+              >
+                <option value="">Выберите дисциплину (необязательно)</option>
+                {disciplines.map((discipline) => (
+                  <option key={discipline.Id} value={discipline.Name}>
+                    {discipline.Name}
+                  </option>
+                ))}
+              </select>
+              {disciplines.length === 0 && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Нет дисциплин. <a href="/admin/disciplines" className="text-pink-400 hover:underline">Добавить дисциплину</a>
+                </p>
+              )}
+            </div>
             <Input
               label="Ссылка на YouTube"
               value={formData.linkyt}
@@ -201,6 +246,11 @@ export default function AdminPortfolio() {
                 />
               )}
               <h3 className="text-xl font-bold text-white mb-2">{video.Name}</h3>
+              {video.Game && (
+                <p className="text-gray-300 text-sm mb-2">
+                  <span className="font-semibold">Дисциплина:</span> {video.Game}
+                </p>
+              )}
               <p className="text-gray-400 text-sm mb-4 line-clamp-3">
                 {video.description}
               </p>
