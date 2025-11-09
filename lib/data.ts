@@ -22,6 +22,12 @@ export interface Tournament {
   Comands: number | null;
 }
 
+export interface Discipline {
+  Id: number;
+  Name: string;
+  RegistrationLink: string;
+}
+
 export interface SiteSettings {
   socialLinks: {
     youtube: string;
@@ -37,6 +43,7 @@ export interface SiteSettings {
 interface DataStore {
   portfolio: Video[];
   tournaments: Tournament[];
+  disciplines: Discipline[];
   settings: SiteSettings;
 }
 
@@ -61,6 +68,7 @@ async function getKVStore(): Promise<DataStore | null> {
       return {
         portfolio: [],
         tournaments: [],
+        disciplines: [],
         settings: {
           socialLinks: {
             youtube: 'https://www.youtube.com/@ORCHIDCUP',
@@ -102,6 +110,7 @@ async function getKVStore(): Promise<DataStore | null> {
           return { 
       portfolio: [], 
       tournaments: [],
+      disciplines: [],
       settings: {
         socialLinks: {
           youtube: 'https://www.youtube.com/@ORCHIDCUP',
@@ -176,9 +185,10 @@ async function getKVStore(): Promise<DataStore | null> {
               return result.result;
             }
             return {
-              portfolio: [],
-              tournaments: [],
-              settings: {
+        portfolio: [],
+        tournaments: [],
+        disciplines: [],
+        settings: {
                 socialLinks: {
                   youtube: 'https://www.youtube.com/@ORCHIDCUP',
                   twitch: 'https://www.twitch.tv/orchidcup',
@@ -197,6 +207,7 @@ async function getKVStore(): Promise<DataStore | null> {
       return { 
       portfolio: [], 
       tournaments: [],
+      disciplines: [],
       settings: {
         socialLinks: {
           youtube: 'https://www.youtube.com/@ORCHIDCUP',
@@ -283,6 +294,7 @@ async function ensureDataFile(): Promise<DataStore> {
       const initialData: DataStore = {
         portfolio: [],
         tournaments: [],
+        disciplines: [],
         settings: {
           socialLinks: {
             youtube: 'https://www.youtube.com/@ORCHIDCUP',
@@ -303,6 +315,7 @@ async function ensureDataFile(): Promise<DataStore> {
     return { 
       portfolio: [], 
       tournaments: [],
+      disciplines: [],
       settings: {
         socialLinks: {
           youtube: 'https://www.youtube.com/@ORCHIDCUP',
@@ -352,6 +365,7 @@ async function getStore(): Promise<DataStore> {
       return { 
       portfolio: [], 
       tournaments: [],
+      disciplines: [],
       settings: {
         socialLinks: {
           youtube: 'https://www.youtube.com/@ORCHIDCUP',
@@ -370,9 +384,10 @@ async function getStore(): Promise<DataStore> {
   // На Vercel без Redis возвращаем пустые данные
   console.warn('No Redis/KV configured and on Vercel, returning empty store');
   return { 
-    portfolio: [], 
-    tournaments: [],
-    settings: {
+        portfolio: [],
+        tournaments: [],
+        disciplines: [],
+        settings: {
       socialLinks: {
         youtube: 'https://www.youtube.com/@ORCHIDCUP',
         twitch: 'https://www.twitch.tv/orchidcup',
@@ -410,7 +425,7 @@ async function saveStore(data: DataStore): Promise<void> {
 export async function getPortfolio(): Promise<Video[]> {
   try {
     const data = await getStore();
-    return data.portfolio;
+    return data.portfolio || [];
   } catch (error) {
     console.error('Error reading portfolio:', error);
     return [];
@@ -420,9 +435,19 @@ export async function getPortfolio(): Promise<Video[]> {
 export async function getTournaments(): Promise<Tournament[]> {
   try {
     const data = await getStore();
-    return data.tournaments;
+    return data.tournaments || [];
   } catch (error) {
     console.error('Error reading tournaments:', error);
+    return [];
+  }
+}
+
+export async function getDisciplines(): Promise<Discipline[]> {
+  try {
+    const data = await getStore();
+    return data.disciplines || [];
+  } catch (error) {
+    console.error('Error reading disciplines:', error);
     return [];
   }
 }
@@ -446,6 +471,17 @@ async function saveTournaments(tournaments: Tournament[]): Promise<void> {
     await saveStore(data);
   } catch (error) {
     console.error('Error saving tournaments:', error);
+    throw error;
+  }
+}
+
+async function saveDisciplines(disciplines: Discipline[]): Promise<void> {
+  try {
+    const data = await getStore();
+    data.disciplines = disciplines;
+    await saveStore(data);
+  } catch (error) {
+    console.error('Error saving disciplines:', error);
     throw error;
   }
 }
@@ -507,6 +543,36 @@ export async function deleteTournament(id: number): Promise<boolean> {
   if (index === -1) return false;
   tournaments.splice(index, 1);
   await saveTournaments(tournaments);
+  return true;
+}
+
+// CRUD операции для дисциплин
+export async function addDiscipline(discipline: Omit<Discipline, 'Id'>): Promise<Discipline> {
+  const disciplines = await getDisciplines();
+  const newId = disciplines.length > 0 
+    ? Math.max(...disciplines.map(d => d.Id)) + 1 
+    : 1;
+  const newDiscipline: Discipline = { ...discipline, Id: newId };
+  disciplines.push(newDiscipline);
+  await saveDisciplines(disciplines);
+  return newDiscipline;
+}
+
+export async function updateDiscipline(id: number, discipline: Partial<Discipline>): Promise<Discipline | null> {
+  const disciplines = await getDisciplines();
+  const index = disciplines.findIndex(d => d.Id === id);
+  if (index === -1) return null;
+  disciplines[index] = { ...disciplines[index], ...discipline, Id: id };
+  await saveDisciplines(disciplines);
+  return disciplines[index];
+}
+
+export async function deleteDiscipline(id: number): Promise<boolean> {
+  const disciplines = await getDisciplines();
+  const index = disciplines.findIndex(d => d.Id === id);
+  if (index === -1) return false;
+  disciplines.splice(index, 1);
+  await saveDisciplines(disciplines);
   return true;
 }
 

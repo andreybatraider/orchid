@@ -14,9 +14,16 @@ interface Tournament {
   Comands: number | null;
 }
 
+interface Discipline {
+  Id: number;
+  Name: string;
+  RegistrationLink: string;
+}
+
 export default function AdminTournaments() {
   const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [disciplines, setDisciplines] = useState<Discipline[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingTournament, setEditingTournament] = useState<Tournament | null>(null);
@@ -31,6 +38,7 @@ export default function AdminTournaments() {
   useEffect(() => {
     // Проверка auth теперь в layout
     fetchTournaments();
+    fetchDisciplines();
   }, []);
 
   const fetchTournaments = async () => {
@@ -45,6 +53,18 @@ export default function AdminTournaments() {
       console.error('Failed to fetch tournaments:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchDisciplines = async () => {
+    try {
+      const response = await fetch('/api/admin/disciplines');
+      if (response.ok) {
+        const data = await response.json();
+        setDisciplines(data.list || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch disciplines:', error);
     }
   };
 
@@ -163,13 +183,27 @@ export default function AdminTournaments() {
                 variant="bordered"
                 isRequired
               />
-              <Input
-                label="Дисциплина"
-                value={formData.Game}
-                onChange={(e) => setFormData({ ...formData, Game: e.target.value })}
-                variant="bordered"
-                isRequired
-              />
+              <div>
+                <label className="text-sm text-gray-300 mb-2 block">Дисциплина</label>
+                <select
+                  value={formData.Game}
+                  onChange={(e) => setFormData({ ...formData, Game: e.target.value })}
+                  className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  required
+                >
+                  <option value="">Выберите дисциплину</option>
+                  {disciplines.map((discipline) => (
+                    <option key={discipline.Id} value={discipline.Name}>
+                      {discipline.Name}
+                    </option>
+                  ))}
+                </select>
+                {disciplines.length === 0 && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Нет дисциплин. <a href="/admin/disciplines" className="text-pink-400 hover:underline">Добавить дисциплину</a>
+                  </p>
+                )}
+              </div>
               <Input
                 label="Дата (YYYY-MM-DD)"
                 type="date"
