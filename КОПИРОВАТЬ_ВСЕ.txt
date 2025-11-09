@@ -1,0 +1,8 @@
+cd E:\ORCHID
+git init
+git add .
+git commit -m "Initial commit: ORCHID project with admin panel"
+git branch -M main
+git remote add origin https://github.com/andreybatraider/orchid.git
+git push -u origin main
+

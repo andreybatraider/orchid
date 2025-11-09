@@ -1,0 +1,48 @@
+========================================
+КОМАНДЫ ДЛЯ ПУША НА GITHUB
+Репозиторий: https://github.com/andreybatraider/orchid
+========================================
+
+Выполняйте команды ПО ПОРЯДКУ:
+
+1. Инициализация Git:
+   git init
+
+2. Добавление всех файлов:
+   git add .
+
+3. Создание первого коммита:
+   git commit -m "Initial commit: ORCHID project with admin panel"
+
+4. Настройка ветки main:
+   git branch -M main
+
+5. Подключение к GitHub:
+   git remote add origin https://github.com/andreybatraider/orchid.git
+
+6. Пуш на GitHub:
+   git push -u origin main
+
+========================================
+ВАЖНО:
+========================================
+
+Если репозиторий уже содержит файлы (например, README.md),
+перед пушем выполните:
+
+   git pull origin main --allow-unrelated-histories
+
+Затем повторите команду 6:
+   git push -u origin main
+
+========================================
+ЕСЛИ БЫЛА ОШИБКА "remote origin already exists":
+========================================
+
+Удалите существующий remote:
+   git remote remove origin
+
+Затем выполните команды 5 и 6 снова.
+
+========================================
+
