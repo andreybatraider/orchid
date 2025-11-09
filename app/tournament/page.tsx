@@ -42,25 +42,81 @@ const formatTeamsCount = (count: number | null): string => {
 
 // Функция для получения пути к иконке дисциплины
 const getDisciplineIcon = (disciplineName: string): string | null => {
-  const name = disciplineName.toLowerCase().trim();
-  if (name.includes('dota') || name === 'dota2' || name === 'dota 2') {
+  if (!disciplineName) return null;
+  
+  const name = disciplineName.toLowerCase().trim().replace(/\s+/g, ' ');
+  
+  // Проверяем Dota 2 (различные варианты написания)
+  if (name.includes('dota')) {
     return '/Dota2.png';
   }
-  if (name.includes('cs2') || name.includes('counter-strike 2') || name.includes('counter strike 2') || name === 'cs 2') {
+  
+  // Проверяем Counter-Strike 2 (различные варианты написания)
+  if (name.includes('cs2') || 
+      name.includes('counter-strike') || 
+      name.includes('counter strike') ||
+      name === 'cs 2' ||
+      name.startsWith('cs2') ||
+      name === 'cs2') {
     return '/CS2.png';
   }
+  
   return null;
 };
 
 export default async function TournamentsPage() {
   const { list: tournaments } = await getTournaments();
   const disciplines = await getDisciplinesData();
+  
+  // Отладочная информация (только на сервере)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('Tournaments page - Disciplines:', disciplines.map(d => d.Name));
+    console.log('Tournaments page - Tournaments:', tournaments.map(t => ({ id: t.Id, game: t.Game })));
+  }
 
   // Создаем маппинг названия дисциплины -> ссылка регистрации
+  // Используем нормализованные ключи для лучшего сопоставления
   const disciplineMap = new Map<string, string>();
+  const disciplineNameMap = new Map<string, string>(); // нормализованное имя -> оригинальное имя
+  
   disciplines.forEach(discipline => {
+    // Сохраняем оригинальное имя
     disciplineMap.set(discipline.Name, discipline.RegistrationLink);
+    // Также сохраняем нормализованное имя (нижний регистр, без пробелов)
+    const normalized = discipline.Name.toLowerCase().trim().replace(/\s+/g, ' ');
+    disciplineNameMap.set(normalized, discipline.Name);
+    disciplineMap.set(normalized, discipline.RegistrationLink);
   });
+  
+  // Функция для поиска дисциплины по названию (с учетом вариантов написания)
+  const findDisciplineLink = (gameName: string): string => {
+    if (!gameName) return 'https://t.me/ORCHIDORG';
+    
+    // Пробуем точное совпадение
+    if (disciplineMap.has(gameName)) {
+      return disciplineMap.get(gameName)!;
+    }
+    
+    // Пробуем нормализованное совпадение
+    const normalized = gameName.toLowerCase().trim().replace(/\s+/g, ' ');
+    if (disciplineMap.has(normalized)) {
+      return disciplineMap.get(normalized)!;
+    }
+    
+    // Пробуем найти по частичному совпадению
+    const entries = Array.from(disciplineMap.entries());
+    for (const [key, link] of entries) {
+      const keyNormalized = key.toLowerCase().trim();
+      const gameNormalized = gameName.toLowerCase().trim();
+      if (keyNormalized === gameNormalized || 
+          keyNormalized.includes(gameNormalized) || 
+          gameNormalized.includes(keyNormalized)) {
+        return link;
+      }
+    }
+    
+    return 'https://t.me/ORCHIDORG';
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 mt-24" >
@@ -84,7 +140,7 @@ export default async function TournamentsPage() {
             };
 
             // Получаем ссылку регистрации для этой дисциплины
-            const registrationLink = disciplineMap.get(safeTournament.Game) || 'https://t.me/ORCHIDORG';
+            const registrationLink = findDisciplineLink(safeTournament.Game);
             const disciplineIcon = getDisciplineIcon(safeTournament.Game);
 
             return (
