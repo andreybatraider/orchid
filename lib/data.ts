@@ -31,6 +31,7 @@ export interface SiteSettings {
     discord: string;
     contactUs: string;
   };
+  orderButtonLink: string;
 }
 
 interface DataStore {
@@ -69,6 +70,7 @@ async function getKVStore(): Promise<DataStore | null> {
             discord: '',
             contactUs: 'https://t.me/ORCHIDORG',
           },
+          orderButtonLink: 'https://t.me/ORCHIDORG',
         },
       };
     }
@@ -109,6 +111,7 @@ async function getKVStore(): Promise<DataStore | null> {
           discord: '',
           contactUs: 'https://t.me/ORCHIDORG',
         },
+        orderButtonLink: 'https://t.me/ORCHIDORG',
       },
     };
         } finally {
@@ -184,6 +187,7 @@ async function getKVStore(): Promise<DataStore | null> {
                   discord: '',
                   contactUs: 'https://t.me/ORCHIDORG',
                 },
+                orderButtonLink: 'https://t.me/ORCHIDORG',
               },
             };
           }
@@ -202,6 +206,7 @@ async function getKVStore(): Promise<DataStore | null> {
           discord: '',
           contactUs: 'https://t.me/ORCHIDORG',
         },
+        orderButtonLink: 'https://t.me/ORCHIDORG',
       },
     };
     }
@@ -287,6 +292,7 @@ async function ensureDataFile(): Promise<DataStore> {
             discord: '',
             contactUs: 'https://t.me/ORCHIDORG',
           },
+          orderButtonLink: 'https://t.me/ORCHIDORG',
         },
       };
       await fs.writeFile(DATA_FILE, JSON.stringify(initialData, null, 2));
@@ -306,6 +312,7 @@ async function ensureDataFile(): Promise<DataStore> {
           discord: '',
           contactUs: 'https://t.me/ORCHIDORG',
         },
+        orderButtonLink: 'https://t.me/ORCHIDORG',
       },
     };
   }
@@ -354,6 +361,7 @@ async function getStore(): Promise<DataStore> {
           discord: '',
           contactUs: 'https://t.me/ORCHIDORG',
         },
+        orderButtonLink: 'https://t.me/ORCHIDORG',
       },
     };
     }
@@ -373,6 +381,7 @@ async function getStore(): Promise<DataStore> {
         discord: '',
         contactUs: 'https://t.me/ORCHIDORG',
       },
+      orderButtonLink: 'https://t.me/ORCHIDORG',
     },
   };
 }
@@ -516,7 +525,12 @@ export async function getSettings(): Promise<SiteSettings> {
           discord: '',
           contactUs: 'https://t.me/ORCHIDORG',
         },
+        orderButtonLink: 'https://t.me/ORCHIDORG',
       };
+    }
+    // Убедимся, что orderButtonLink есть
+    if (!data.settings.orderButtonLink) {
+      data.settings.orderButtonLink = 'https://t.me/ORCHIDORG';
     }
     return data.settings;
   } catch (error) {
@@ -530,6 +544,7 @@ export async function getSettings(): Promise<SiteSettings> {
         discord: '',
         contactUs: 'https://t.me/ORCHIDORG',
       },
+      orderButtonLink: 'https://t.me/ORCHIDORG',
     };
   }
 }

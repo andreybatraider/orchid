@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
         discord: '',
         contactUs: 'https://t.me/ORCHIDORG',
       },
+      orderButtonLink: 'https://t.me/ORCHIDORG',
     });
   }
 }

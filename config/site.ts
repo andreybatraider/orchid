@@ -5,7 +5,7 @@ export const siteConfig = {
   description: "Делаем киберспорт",
   navItems: [
     {
-      label: "Портфолио",
+      label: "Архив турниров",
       href: "/portfolio",
     },
     {
@@ -23,7 +23,7 @@ export const siteConfig = {
   ],
   navMenuItems: [
     {
-      label: "Портфолио",
+      label: "Архив турниров",
       href: "/portfolio",
     },
     {

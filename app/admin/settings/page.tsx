@@ -14,6 +14,7 @@ interface SiteSettings {
     discord: string;
     contactUs: string;
   };
+  orderButtonLink: string;
 }
 
 export default function AdminSettings() {
@@ -29,6 +30,7 @@ export default function AdminSettings() {
       discord: '',
       contactUs: '',
     },
+    orderButtonLink: '',
   });
 
   useEffect(() => {
@@ -180,23 +182,43 @@ export default function AdminSettings() {
               }}
             />
 
-            <div className="flex gap-4 pt-4">
-              <Button
-                type="submit"
-                color="primary"
-                className="bg-[#FF2F71] text-white"
-                isLoading={saving}
-              >
-                Сохранить ссылки
-              </Button>
-              <Button
-                type="button"
-                variant="flat"
-                onClick={() => router.push('/admin/dashboard')}
-              >
-                Отмена
-              </Button>
+            <div className="pt-6 border-t border-gray-700 mt-6">
+              <div className="pb-4 mb-6">
+                <h2 className="text-xl font-bold text-white">Кнопка "Заказать"</h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  Ссылка для кнопки "Заказать" на странице Услуги
+                </p>
+              </div>
+              <Input
+                label="Ссылка для кнопки 'Заказать'"
+                placeholder="https://t.me/..."
+                value={settings.orderButtonLink}
+                onChange={(e) => setSettings({ ...settings, orderButtonLink: e.target.value })}
+                variant="bordered"
+                classNames={{
+                  input: 'text-white',
+                  label: 'text-gray-300',
+                }}
+              />
             </div>
+
+            <div className="flex gap-4 pt-6">
+                <Button
+                  type="submit"
+                  color="primary"
+                  className="bg-[#FF2F71] text-white"
+                  isLoading={saving}
+                >
+                  Сохранить настройки
+                </Button>
+                <Button
+                  type="button"
+                  variant="flat"
+                  onClick={() => router.push('/admin/portfolio')}
+                >
+                  Отмена
+                </Button>
+              </div>
           </form>
         </div>
       </div>

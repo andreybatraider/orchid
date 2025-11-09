@@ -1,6 +1,33 @@
+'use client';
+
 import { title } from "@/components/primitives";
+import { useEffect, useState } from "react";
+
+interface SiteSettings {
+  orderButtonLink: string;
+}
 
 export default function ServicesPage() {
+  const [orderLink, setOrderLink] = useState('https://t.me/ORCHIDORG');
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const response = await fetch('/api/settings');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.orderButtonLink) {
+          setOrderLink(data.orderButtonLink);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch settings:', error);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 mt-24">
       <h1 className={title()}>Услуги</h1>
@@ -55,7 +82,7 @@ export default function ServicesPage() {
               <span>Срок подготовки: 3–4 дня</span>
             </div>
             <a
-              href="https://t.me/ORCHIDORG"
+              href={orderLink}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full"
@@ -112,7 +139,7 @@ export default function ServicesPage() {
               <span>Срок подготовки: 3–5 дней</span>
             </div>
             <a
-              href="https://t.me/ORCHIDORG"
+              href={orderLink}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full"
@@ -169,7 +196,7 @@ export default function ServicesPage() {
               <span>Срок подготовки: 5–7 дней</span>
             </div>
             <a
-              href="https://t.me/ORCHIDORG"
+              href={orderLink}
               target="_blank"
               rel="noopener noreferrer"
               className="block w-full"
