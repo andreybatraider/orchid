@@ -146,46 +146,31 @@ export default function AdminTournaments() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="flex items-center justify-center">
         <p className="text-white">Загрузка...</p>
       </div>
     );
   }
 
-  if (!authenticated) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-900 p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-white">Управление турнирами</h1>
-          <div className="flex gap-4">
-            <Button
-              as="a"
-              href="/admin/dashboard"
-              variant="flat"
-              color="default"
-            >
-              Назад
-            </Button>
-            <Button
-              color="primary"
-              className="bg-[#FF2F71]"
-              onClick={() => {
-                setShowForm(true);
-                setEditingTournament(null);
-                setFormData({ Name: '', Price: '', Date: '', Game: '', Comands: '' });
-              }}
-            >
-              Добавить турнир
-            </Button>
-          </div>
-        </div>
+    <div className="max-w-7xl">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-bold text-white">Управление турнирами</h1>
+        <Button
+          color="primary"
+          className="bg-[#FF2F71]"
+          onClick={() => {
+            setShowForm(true);
+            setEditingTournament(null);
+            setFormData({ Name: '', Price: '', Date: '', Game: '', Comands: '' });
+          }}
+        >
+          Добавить турнир
+        </Button>
+      </div>
 
         {showForm && (
-          <div className="bg-gray-800 p-6 rounded-lg mb-6">
+          <div className="bg-gray-800/50 border border-gray-700 p-6 rounded-lg mb-6">
             <h2 className="text-xl font-bold text-white mb-4">
               {editingTournament ? 'Редактировать турнир' : 'Добавить турнир'}
             </h2>
@@ -242,7 +227,7 @@ export default function AdminTournaments() {
           {tournaments.map((tournament) => (
             <div
               key={tournament.Id}
-              className="bg-gray-800 p-6 rounded-lg border border-gray-700"
+              className="bg-gray-800/50 border border-gray-700 p-6 rounded-lg"
             >
               <h3 className="text-xl font-bold text-white mb-2">{tournament.Name}</h3>
               <div className="space-y-2 mb-4">
@@ -289,11 +274,10 @@ export default function AdminTournaments() {
         </div>
 
         {tournaments.length === 0 && !loading && (
-          <div className="bg-gray-800 p-8 rounded-lg text-center">
+          <div className="bg-gray-800/50 border border-gray-700 p-8 rounded-lg text-center">
             <p className="text-gray-400">Нет турниров</p>
           </div>
         )}
-      </div>
     </div>
   );
 }

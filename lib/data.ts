@@ -22,9 +22,21 @@ export interface Tournament {
   Comands: number | null;
 }
 
+export interface SiteSettings {
+  socialLinks: {
+    youtube: string;
+    twitch: string;
+    vk: string;
+    telegram: string;
+    discord: string;
+    contactUs: string;
+  };
+}
+
 interface DataStore {
   portfolio: Video[];
   tournaments: Tournament[];
+  settings: SiteSettings;
 }
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'store.json');
@@ -44,7 +56,21 @@ async function getKVStore(): Promise<DataStore | null> {
     if (USE_KV) {
       const { kv } = await import('@vercel/kv');
       const data = await kv.get<DataStore>('orchid-data');
-      return data || { portfolio: [], tournaments: [] };
+      if (data) return data;
+      return {
+        portfolio: [],
+        tournaments: [],
+        settings: {
+          socialLinks: {
+            youtube: 'https://www.youtube.com/@ORCHIDCUP',
+            twitch: 'https://www.twitch.tv/orchidcup',
+            vk: 'https://vk.com/orchidcybercup',
+            telegram: 'https://t.me/orchidcup',
+            discord: '',
+            contactUs: 'https://t.me/ORCHIDORG',
+          },
+        },
+      };
     }
     
     // Используем стандартный Redis через ioredis
@@ -71,7 +97,20 @@ async function getKVStore(): Promise<DataStore | null> {
             return parsed;
           }
           console.log('Redis returned empty, returning default store');
-          return { portfolio: [], tournaments: [] };
+          return { 
+      portfolio: [], 
+      tournaments: [],
+      settings: {
+        socialLinks: {
+          youtube: 'https://www.youtube.com/@ORCHIDCUP',
+          twitch: 'https://www.twitch.tv/orchidcup',
+          vk: 'https://vk.com/orchidcybercup',
+          telegram: 'https://t.me/orchidcup',
+          discord: '',
+          contactUs: 'https://t.me/ORCHIDORG',
+        },
+      },
+    };
         } finally {
           await redis.quit();
         }
@@ -101,18 +140,70 @@ async function getKVStore(): Promise<DataStore | null> {
         const result = await response.json();
         if (result.result) {
           try {
-            return JSON.parse(result.result);
+            const parsed = JSON.parse(result.result);
+            // Убедимся, что settings есть
+            if (!parsed.settings) {
+              parsed.settings = {
+                socialLinks: {
+                  youtube: 'https://www.youtube.com/@ORCHIDCUP',
+                  twitch: 'https://www.twitch.tv/orchidcup',
+                  vk: 'https://vk.com/orchidcybercup',
+                  telegram: 'https://t.me/orchidcup',
+                  discord: '',
+                  contactUs: 'https://t.me/ORCHIDORG',
+                },
+              };
+            }
+            return parsed;
           } catch {
             // Если result.result уже объект, возвращаем его
             if (typeof result.result === 'object') {
+              if (!result.result.settings) {
+                result.result.settings = {
+                  socialLinks: {
+                    youtube: 'https://www.youtube.com/@ORCHIDCUP',
+                    twitch: 'https://www.twitch.tv/orchidcup',
+                    vk: 'https://vk.com/orchidcybercup',
+                    telegram: 'https://t.me/orchidcup',
+                    discord: '',
+                    contactUs: 'https://t.me/ORCHIDORG',
+                  },
+                };
+              }
               return result.result;
             }
-            return { portfolio: [], tournaments: [] };
+            return {
+              portfolio: [],
+              tournaments: [],
+              settings: {
+                socialLinks: {
+                  youtube: 'https://www.youtube.com/@ORCHIDCUP',
+                  twitch: 'https://www.twitch.tv/orchidcup',
+                  vk: 'https://vk.com/orchidcybercup',
+                  telegram: 'https://t.me/orchidcup',
+                  discord: '',
+                  contactUs: 'https://t.me/ORCHIDORG',
+                },
+              },
+            };
           }
         }
       }
       
-      return { portfolio: [], tournaments: [] };
+      return { 
+      portfolio: [], 
+      tournaments: [],
+      settings: {
+        socialLinks: {
+          youtube: 'https://www.youtube.com/@ORCHIDCUP',
+          twitch: 'https://www.twitch.tv/orchidcup',
+          vk: 'https://vk.com/orchidcybercup',
+          telegram: 'https://t.me/orchidcup',
+          discord: '',
+          contactUs: 'https://t.me/ORCHIDORG',
+        },
+      },
+    };
     }
     
     return null;
@@ -187,13 +278,36 @@ async function ensureDataFile(): Promise<DataStore> {
       const initialData: DataStore = {
         portfolio: [],
         tournaments: [],
+        settings: {
+          socialLinks: {
+            youtube: 'https://www.youtube.com/@ORCHIDCUP',
+            twitch: 'https://www.twitch.tv/orchidcup',
+            vk: 'https://vk.com/orchidcybercup',
+            telegram: 'https://t.me/orchidcup',
+            discord: '',
+            contactUs: 'https://t.me/ORCHIDORG',
+          },
+        },
       };
       await fs.writeFile(DATA_FILE, JSON.stringify(initialData, null, 2));
       return initialData;
     }
   } catch (error) {
     console.error('Error ensuring data file:', error);
-    return { portfolio: [], tournaments: [] };
+    return { 
+      portfolio: [], 
+      tournaments: [],
+      settings: {
+        socialLinks: {
+          youtube: 'https://www.youtube.com/@ORCHIDCUP',
+          twitch: 'https://www.twitch.tv/orchidcup',
+          vk: 'https://vk.com/orchidcybercup',
+          telegram: 'https://t.me/orchidcup',
+          discord: '',
+          contactUs: 'https://t.me/ORCHIDORG',
+        },
+      },
+    };
   }
 }
 
@@ -228,13 +342,39 @@ async function getStore(): Promise<DataStore> {
       return await ensureDataFile();
     } catch (error) {
       console.error('Error reading from file system:', error);
-      return { portfolio: [], tournaments: [] };
+      return { 
+      portfolio: [], 
+      tournaments: [],
+      settings: {
+        socialLinks: {
+          youtube: 'https://www.youtube.com/@ORCHIDCUP',
+          twitch: 'https://www.twitch.tv/orchidcup',
+          vk: 'https://vk.com/orchidcybercup',
+          telegram: 'https://t.me/orchidcup',
+          discord: '',
+          contactUs: 'https://t.me/ORCHIDORG',
+        },
+      },
+    };
     }
   }
   
   // На Vercel без Redis возвращаем пустые данные
   console.warn('No Redis/KV configured and on Vercel, returning empty store');
-  return { portfolio: [], tournaments: [] };
+  return { 
+    portfolio: [], 
+    tournaments: [],
+    settings: {
+      socialLinks: {
+        youtube: 'https://www.youtube.com/@ORCHIDCUP',
+        twitch: 'https://www.twitch.tv/orchidcup',
+        vk: 'https://vk.com/orchidcybercup',
+        telegram: 'https://t.me/orchidcup',
+        discord: '',
+        contactUs: 'https://t.me/ORCHIDORG',
+      },
+    },
+  };
 }
 
 async function saveStore(data: DataStore): Promise<void> {
@@ -359,4 +499,62 @@ export async function deleteTournament(id: number): Promise<boolean> {
   tournaments.splice(index, 1);
   await saveTournaments(tournaments);
   return true;
+}
+
+// Функции для работы с настройками
+export async function getSettings(): Promise<SiteSettings> {
+  try {
+    const data = await getStore();
+    // Если settings нет, возвращаем дефолтные
+    if (!data.settings) {
+      return {
+        socialLinks: {
+          youtube: 'https://www.youtube.com/@ORCHIDCUP',
+          twitch: 'https://www.twitch.tv/orchidcup',
+          vk: 'https://vk.com/orchidcybercup',
+          telegram: 'https://t.me/orchidcup',
+          discord: '',
+          contactUs: 'https://t.me/ORCHIDORG',
+        },
+      };
+    }
+    return data.settings;
+  } catch (error) {
+    console.error('Error reading settings:', error);
+    return {
+      socialLinks: {
+        youtube: 'https://www.youtube.com/@ORCHIDCUP',
+        twitch: 'https://www.twitch.tv/orchidcup',
+        vk: 'https://vk.com/orchidcybercup',
+        telegram: 'https://t.me/orchidcup',
+        discord: '',
+        contactUs: 'https://t.me/ORCHIDORG',
+      },
+    };
+  }
+}
+
+async function saveSettings(settings: SiteSettings): Promise<void> {
+  try {
+    const data = await getStore();
+    data.settings = settings;
+    await saveStore(data);
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    throw error;
+  }
+}
+
+export async function updateSettings(settings: Partial<SiteSettings>): Promise<SiteSettings> {
+  const currentSettings = await getSettings();
+  const newSettings: SiteSettings = {
+    ...currentSettings,
+    ...settings,
+    socialLinks: {
+      ...currentSettings.socialLinks,
+      ...(settings.socialLinks || {}),
+    },
+  };
+  await saveSettings(newSettings);
+  return newSettings;
 }
