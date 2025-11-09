@@ -51,13 +51,15 @@ async function getKVStore(): Promise<DataStore | null> {
       const url = process.env.UPSTASH_REDIS_REST_URL!;
       const token = process.env.UPSTASH_REDIS_REST_TOKEN!;
       
-      // Читаем данные через Upstash REST API (GET команда)
-      const response = await fetch(`${url}/get/orchid-data`, {
+      // Читаем данные через Upstash REST API
+      // Формат: POST с командой Redis в теле запроса
+      const response = await fetch(`${url}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(['GET', 'orchid-data']),
       });
       
       if (response.ok) {
@@ -66,6 +68,10 @@ async function getKVStore(): Promise<DataStore | null> {
           try {
             return JSON.parse(result.result);
           } catch {
+            // Если result.result уже объект, возвращаем его
+            if (typeof result.result === 'object') {
+              return result.result;
+            }
             return { portfolio: [], tournaments: [] };
           }
         }
@@ -97,14 +103,16 @@ async function saveKVStore(data: DataStore): Promise<boolean> {
       const url = process.env.UPSTASH_REDIS_REST_URL!;
       const token = process.env.UPSTASH_REDIS_REST_TOKEN!;
       
-      // Сохраняем данные через Upstash REST API (SET команда)
+      // Сохраняем данные через Upstash REST API
+      // Формат: POST с командой Redis в теле запроса
       const dataString = JSON.stringify(data);
-      const response = await fetch(`${url}/set/orchid-data/${encodeURIComponent(dataString)}`, {
+      const response = await fetch(`${url}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify(['SET', 'orchid-data', dataString]),
       });
       
       return response.ok;
