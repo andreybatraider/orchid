@@ -28,32 +28,91 @@ interface DataStore {
 }
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'store.json');
-const USE_KV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
 
-// Работа с Vercel KV (для продакшена)
+// Проверяем наличие переменных окружения для KV/Redis
+const USE_KV = process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN;
+const USE_UPSTASH = process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN;
+const USE_REDIS = USE_KV || USE_UPSTASH;
+
+// Работа с Vercel KV или Upstash Redis (для продакшена)
 async function getKVStore(): Promise<DataStore | null> {
-  if (!USE_KV) return null;
+  if (!USE_REDIS) return null;
   
   try {
-    // Динамический импорт @vercel/kv только если доступен
-    const { kv } = await import('@vercel/kv');
-    const data = await kv.get<DataStore>('orchid-data');
-    return data || { portfolio: [], tournaments: [] };
+    // Пробуем использовать @vercel/kv (для Vercel KV)
+    if (USE_KV) {
+      const { kv } = await import('@vercel/kv');
+      const data = await kv.get<DataStore>('orchid-data');
+      return data || { portfolio: [], tournaments: [] };
+    }
+    
+    // Используем Upstash REST API
+    if (USE_UPSTASH) {
+      const url = process.env.UPSTASH_REDIS_REST_URL!;
+      const token = process.env.UPSTASH_REDIS_REST_TOKEN!;
+      
+      // Читаем данные через Upstash REST API (GET команда)
+      const response = await fetch(`${url}/get/orchid-data`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        if (result.result) {
+          try {
+            return JSON.parse(result.result);
+          } catch {
+            return { portfolio: [], tournaments: [] };
+          }
+        }
+      }
+      
+      return { portfolio: [], tournaments: [] };
+    }
+    
+    return null;
   } catch (error) {
-    console.error('Error reading from KV:', error);
+    console.error('Error reading from KV/Redis:', error);
     return null;
   }
 }
 
 async function saveKVStore(data: DataStore): Promise<boolean> {
-  if (!USE_KV) return false;
+  if (!USE_REDIS) return false;
   
   try {
-    const { kv } = await import('@vercel/kv');
-    await kv.set('orchid-data', data);
-    return true;
+    // Пробуем использовать @vercel/kv (для Vercel KV)
+    if (USE_KV) {
+      const { kv } = await import('@vercel/kv');
+      await kv.set('orchid-data', data);
+      return true;
+    }
+    
+    // Используем Upstash REST API
+    if (USE_UPSTASH) {
+      const url = process.env.UPSTASH_REDIS_REST_URL!;
+      const token = process.env.UPSTASH_REDIS_REST_TOKEN!;
+      
+      // Сохраняем данные через Upstash REST API (SET команда)
+      const dataString = JSON.stringify(data);
+      const response = await fetch(`${url}/set/orchid-data/${encodeURIComponent(dataString)}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      return response.ok;
+    }
+    
+    return false;
   } catch (error) {
-    console.error('Error saving to KV:', error);
+    console.error('Error saving to KV/Redis:', error);
     return false;
   }
 }
@@ -93,25 +152,41 @@ async function saveDataFile(data: DataStore): Promise<void> {
 
 // Общие функции для чтения/записи
 async function getStore(): Promise<DataStore> {
-  // Сначала пробуем KV (для Vercel)
-  if (USE_KV) {
+  // Сначала пробуем KV/Redis (для Vercel)
+  if (USE_REDIS) {
     const kvData = await getKVStore();
     if (kvData) return kvData;
   }
   
   // Fallback на файловую систему (для локальной разработки)
-  return await ensureDataFile();
+  // На Vercel это не сработает, но для локальной разработки нужно
+  try {
+    return await ensureDataFile();
+  } catch (error) {
+    // На Vercel файловая система read-only, возвращаем пустые данные
+    console.warn('File system not available, using empty store');
+    return { portfolio: [], tournaments: [] };
+  }
 }
 
 async function saveStore(data: DataStore): Promise<void> {
-  // Пробуем сохранить в KV (для Vercel)
-  if (USE_KV) {
+  // Пробуем сохранить в KV/Redis (для Vercel)
+  if (USE_REDIS) {
     const saved = await saveKVStore(data);
     if (saved) return;
   }
   
   // Fallback на файловую систему (для локальной разработки)
-  await saveDataFile(data);
+  // На Vercel это не сработает из-за read-only файловой системы
+  try {
+    await saveDataFile(data);
+  } catch (error) {
+    // На Vercel это ожидаемая ошибка, если Redis не настроен
+    if (process.env.VERCEL) {
+      throw new Error('Database not configured. Please set up Redis/KV database.');
+    }
+    throw error;
+  }
 }
 
 // Чтение данных
