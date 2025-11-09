@@ -18,31 +18,37 @@ export default function AdminLayout({
   useEffect(() => {
     // Редирект с dashboard на portfolio
     if (pathname === '/admin/dashboard') {
-      router.push('/admin/portfolio');
+      router.replace('/admin/portfolio');
       return;
     }
     // Не проверяем auth на странице входа
     if (pathname === '/admin') {
       setLoading(false);
+      setAuthenticated(false);
       return;
     }
+    // Для всех остальных страниц проверяем auth
     checkAuth();
-  }, [pathname, router]);
+  }, [pathname]);
 
   const checkAuth = async () => {
     try {
+      setLoading(true);
       const response = await fetch('/api/admin/auth');
       const data = await response.json();
       if (data.authenticated) {
         setAuthenticated(true);
+        setLoading(false);
       } else {
-        router.push('/admin');
+        setAuthenticated(false);
+        setLoading(false);
+        router.replace('/admin');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
-      router.push('/admin');
-    } finally {
+      setAuthenticated(false);
       setLoading(false);
+      router.replace('/admin');
     }
   };
 

@@ -45,7 +45,9 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (data.success) {
-        router.push('/admin/portfolio');
+        // Небольшая задержка для установки cookie, затем редирект
+        await new Promise(resolve => setTimeout(resolve, 100));
+        window.location.href = '/admin/portfolio';
       } else {
         setError(data.error || 'Неверный пароль');
       }
