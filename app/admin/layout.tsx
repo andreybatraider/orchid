@@ -68,16 +68,28 @@ export default function AdminLayout({
     return <>{children}</>;
   }
 
+  // Пока загружается проверка авторизации
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
-        <p className="text-white">Загрузка...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="text-center">
+          <p className="text-white text-lg mb-2">Загрузка...</p>
+          <p className="text-gray-400 text-sm">Проверка авторизации</p>
+        </div>
       </div>
     );
   }
 
+  // Если не авторизован, ничего не показываем (редирект уже произошел)
   if (!authenticated) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+        <div className="text-center">
+          <p className="text-white text-lg mb-2">Перенаправление...</p>
+          <p className="text-gray-400 text-sm">Вы будете перенаправлены на страницу входа</p>
+        </div>
+      </div>
+    );
   }
 
   return (
